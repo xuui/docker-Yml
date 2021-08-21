@@ -1,21 +1,30 @@
-FROM alpine:3.12
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories;
-RUN apk update;
+FROM ubuntu:12.04
 
-LABEL maintainer="dev@jpillora.com"
-# webproc release settings
-ENV WEBPROC_VERSION 0.2.2
-ENV WEBPROC_URL https://github.com/jpillora/webproc/releases/download/$WEBPROC_VERSION/webproc_linux_amd64.gz
-# fetch dnsmasq and webproc binary
-RUN apk update \
-	&& apk --no-cache add dnsmasq \
-	&& apk add --no-cache --virtual .build-deps curl \
-	&& curl -sL $WEBPROC_URL | gzip -d - > /usr/local/bin/webproc \
-	&& chmod +x /usr/local/bin/webproc \
-	&& apk del .build-deps
-#configure dnsmasq
-RUN mkdir -p /etc/default/
-RUN echo -e "ENABLED=1\nIGNORE_RESOLVCONF=yes" > /etc/default/dnsmasq
-COPY dnsmasq.conf /etc/dnsmasq.conf
-#run!
-ENTRYPOINT ["webproc","--config","/etc/dnsmasq.conf","--","dnsmasq","--no-daemon"]
+RUN apt-get update
+RUN apt-get install -q -y language-pack-en
+RUN update-locale LANG=en_US.UTF-8
+
+# Install dnsmasq
+RUN apt-get install -q -y dnsmasq
+
+# Pre-configure dnsmasq
+RUN echo 'listen-address=__LOCAL_IP__' >> /etc/dnsmasq.conf
+RUN echo 'resolv-file=/etc/resolv.dnsmasq.conf' >> /etc/dnsmasq.conf
+RUN echo 'conf-dir=/etc/dnsmasq.d'  >> /etc/dnsmasq.conf
+RUN echo 'nameserver 8.8.8.8' >> /etc/resolv.dnsmasq.conf
+RUN echo 'nameserver 8.8.4.4' >> /etc/resolv.dnsmasq.conf
+
+# This directory will usually be provided with the -v option.
+# RUN echo 'address=/example.com/xx.xx.xx.xx' >> /etc/dnsmasq.d/0hosts
+
+# On the other hand the above directory isn't reloaded with a SIGHUP. Instead
+# we can use an --addn-hosts file.
+
+RUN touch /etc/addn-hosts
+ADD run.sh /root/run.sh
+ADD reload.sh /root/reload.sh
+
+EXPOSE 22
+EXPOSE 53
+
+CMD /root/run.sh
