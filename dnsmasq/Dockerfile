@@ -16,4 +16,14 @@ RUN set -eux; \
 		dnsmasq vim\
 	; \
 	rm -rf /var/lib/apt/lists/*
+    
+RUN echo 'listen-address=__LOCAL_IP__' >> /etc/dnsmasq.conf; \
+    echo 'resolv-file=/etc/resolv.dnsmasq.conf' >> /etc/dnsmasq.conf; \
+    echo 'conf-dir=/etc/dnsmasq.d'  >> /etc/dnsmasq.conf; \
+    echo 'nameserver 8.8.8.8' >> /etc/resolv.dnsmasq.conf; \
+    echo 'nameserver 8.8.4.4' >> /etc/resolv.dnsmasq.conf; \
+
+EXPOSE 22
+EXPOSE 53
+
 ENTRYPOINT ["dnsmasq", "-kC/etc/dnsmasq.conf"]
