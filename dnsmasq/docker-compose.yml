@@ -2,16 +2,13 @@
 version: '3'
 services:
   dnsmasq:
-    image: jpillora/dnsmasq
-#    build: .
+#    image: jpillora/dnsmasq
+    build: .
     ports:
-      - '53:53'
-      - '5380:8080'
+      - '53:53/udp'
+#      - '53:53/tcp'
     volumes:
 #      - /etc/localtime:/etc/localtime
       - ./dnsmasq.conf:/etc/dnsmasq.conf
-    environment:
-      HTTP_USER: foo
-      HTTP_PASS: bar
-    command: --log-opt max-size=100m
+#    environment:
     restart: always

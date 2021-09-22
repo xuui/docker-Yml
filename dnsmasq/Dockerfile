@@ -1,21 +1,19 @@
-FROM alpine:3.12
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories;
-RUN apk update;
+#FROM alpine:3.14.2
+#RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories;
+#RUN apk upgrade --no-cache \
+# && apk add --no-cache dnsmasq
+#COPY dnsmasq.conf /etc/dnsmasq.conf
+#STOPSIGNAL SIGKILL
+#ENTRYPOINT ["dnsmasq", "-kC/etc/dnsmasq.conf"]
 
-LABEL maintainer="dev@jpillora.com"
-# webproc release settings
-ENV WEBPROC_VERSION 0.2.2
-ENV WEBPROC_URL https://github.com/jpillora/webproc/releases/download/$WEBPROC_VERSION/webproc_linux_amd64.gz
-# fetch dnsmasq and webproc binary
-RUN apk update \
-	&& apk --no-cache add dnsmasq \
-	&& apk add --no-cache --virtual .build-deps curl \
-	&& curl -sL $WEBPROC_URL | gzip -d - > /usr/local/bin/webproc \
-	&& chmod +x /usr/local/bin/webproc \
-	&& apk del .build-deps
-#configure dnsmasq
-RUN mkdir -p /etc/default/
-RUN echo -e "ENABLED=1\nIGNORE_RESOLVCONF=yes" > /etc/default/dnsmasq
-COPY dnsmasq.conf /etc/dnsmasq.conf
-#run!
-ENTRYPOINT ["webproc","--config","/etc/dnsmasq.conf","--","dnsmasq","--no-daemon"]
+FROM debian:bullseye-slim
+#FROM debian:11.0-slim
+#FROM debian:11-slim
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list;
+RUN set -eux; \
+	apt update; \
+	apt install -y --no-install-recommends \
+		dnsmasq vim\
+	; \
+	rm -rf /var/lib/apt/lists/*
+ENTRYPOINT ["dnsmasq", "-kC/etc/dnsmasq.conf"]
